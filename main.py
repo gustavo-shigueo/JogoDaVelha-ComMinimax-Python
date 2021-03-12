@@ -33,13 +33,13 @@ def check_win():
     for i in range(3):
         if board[0][i] == board[1][i] == board[2][i] != " ":
             winner = board[0][i]
-    
+
     # Checking diagonals
     diagonal_1 = board[0][0] == board[1][1] == board[2][2] != " "
     diagonal_2 = board[0][2] == board[1][1] == board[2][0] != " "
     if diagonal_1 or diagonal_2:
         winner = board[1][1]
-    
+
     return winner != None
 
 # Check Tie or Check End
@@ -47,23 +47,16 @@ def check_game_over():
     global winner
 
     # Check for win
-    win = check_win()
-    if win:
-        return True
-    
+    if check_win(): return True
+
     # Check for tie 
     tie = True
     for i in range(3):
-        if " " in board[i]:
-            tie = False
-    
-    if tie:
-        winner = "Tie!"
-    else:
-        winner = None
-       
+        if " " in board[i]: tie = False
+
+    winner = "Tie!" if tie else None
     return tie
-    
+
 # Human player movement
 def human_move():
     global current_player
@@ -74,18 +67,17 @@ def human_move():
     move = int(move)
     i = move - 1
     j = int((move - 1) / 3)
-    if j == 1:
-        i -= 3
-    elif j == 2:
-        i -= 6
-    if board[j][i] != " ":
-        human_move()
-    else:
-        board[j][i] = current_player
+
+    if j == 1: i -= 3
+    elif j == 2: i -= 6
+
+    if board[j][i] != " ": human_move()
+    else: board[j][i] = current_player
+
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-# Best score
+# Find ideal move for the AI
 def best_move():
     global board
     global bestMove
@@ -93,23 +85,22 @@ def best_move():
     depth = 0
 
     for k in range(3):
-        for l in range(3):
-            if board[k][l] == " ":
-                depth += 1
+        for l in range(3): 
+            if board[k][l] == " ": depth += 1
 
     bestScore = float("-inf")
-    # AI's turn
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == " ":
-                board[i][j] = ai
-                score = minimax(depth, False, float("-inf"), float("inf"))
-                board[i][j] = " "
-                if score > bestScore:    
-                    bestScore = score
-                    bestMove = [i,j]
-    
-# Minimax
+    for i in range(9):
+        row = int(i / 3)
+        col = i % 3
+        if board[row][col] != " ": continue
+        board[row][col] = ai
+        score = minimax(depth, False, float("-inf"), float("inf"))
+        board[row][col] = " "
+        bestScore = max(score, bestScore)
+        if score >= bestScore: bestMove = [row, col]
+
+
+# Minimax Algorithm
 def minimax(depth, isMaximizing, alpha, beta):
     global winner
     global scores
@@ -118,43 +109,40 @@ def minimax(depth, isMaximizing, alpha, beta):
     result = check_game_over()
     if result or depth == 0:
         r = scores[winner]
-        if depth >= 2:
-          r *= depth
+        if depth >= 2: r *= depth
         winner = None
         result = False
         return r
 
     if isMaximizing:
         bestScore = float("-inf")
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == " ":
-                    board[i][j] = ai
-                    score = minimax(depth - 1, False, alpha, beta)
-                    board[i][j] = " "
-                    bestScore = max(score, bestScore)
-                    alpha = max(score, alpha)
-                if beta <= alpha:
-                    break
-            if beta <= alpha:
-                break 
+        for i in range(9):
+            row = int(i / 3)
+            col = i % 3
+            if board[row][col] != " ": continue
+            board[row][col] = ai
+            score = minimax(depth - 1, False, alpha, beta)
+            board[row][col] = " "
+            bestScore = max(score, bestScore)
+            alpha = max(score, alpha)
+            if beta <= alpha: break
         return bestScore
     else:
         bestScore = float("inf")
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == " ":
-                    board[i][j] = human
-                    score = minimax(depth - 1, True, alpha, beta)
-                    board[i][j] = " "
-                    bestScore = min(score, bestScore)
-                    beta = min(score, beta)
-                if beta <= alpha:
-                    break
-            if beta <= alpha:
-                break
+        for i in range(9):
+            row = int(i / 3)
+            col = i % 3
+            if board[row][col] != " ": continue
+            board[row][col] = human
+            score = minimax(depth - 1, True, alpha, beta)
+            board[row][col] = " "
+            bestScore = min(score, bestScore)
+            beta = min(score, beta)
+            if beta <= alpha: break
         return bestScore
 
+
+# Start game
 while True:
     board = [
         [" ", " ", " "],
@@ -187,9 +175,5 @@ while True:
     show_board()
     print("")
 
-    if winner != "Tie!":
-        print(winner + " wins!")
-    else:
-        print(winner)
-    
+    print(winner + (" wins!" if winner != "Tie!" else ""))
     time.sleep(3)
